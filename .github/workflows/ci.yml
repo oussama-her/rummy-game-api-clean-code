@@ -1,0 +1,34 @@
+name: CI
+run-name: ${{ github.actor }} 🚀
+on: [push]
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: "Cache Composer dependencies"
+        uses: actions/cache@v3
+        with:
+          path: /tmp/composer-cache
+          key: ${{ runner.os }}-${{ hashFiles('**/composer.lock') }}
+
+      - name: "Install dependencies"
+        uses: php-actions/composer@v6
+        with:
+          php_version: "8.2"
+          php_extensions: ctype iconv xml
+          version: 2
+
+      - name: "Checks Code Style - PhpCS"
+        run: ./vendor/bin/phpcs --colors
+
+      - name: "PhpUnit tests"
+        run: ./bin/phpunit --colors
+
+      - name: "PHPStan Static Analysis"
+        run: ./vendor/bin/phpstan analyse -c phpstan.neon --ansi
+
+      - name: "PhpSpec tests"
+        run: ./vendor/bin/phpspec run --ansi
